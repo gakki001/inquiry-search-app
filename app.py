@@ -9,47 +9,80 @@ url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRVoHcBTlvlpZkRjYrjV0JQA7
 df = pd.read_csv(url)
 
 # =========================
-# 🔽 一覧から選択（追加機能）
+# 🔽 カテゴリー選択
 # =========================
-st.write("### 一覧から選択")
+st.write("### カテゴリーから選択")
 
-all_options = df["問い合わせ内容"].dropna().tolist()
-selected_list = st.selectbox("問い合わせ一覧", ["選択してください"] + all_options)
+# カテゴリー一覧（重複削除＋並び替え）
+categories = sorted(df["カテゴリー"].dropna().unique().tolist())
 
-if selected_list != "選択してください":
-    row = df[df["問い合わせ内容"] == selected_list].iloc[0]
+selected_category = st.selectbox(
+    "カテゴリーを選択",
+    ["選択してください"] + categories
+)
 
+# =========================
+# 🔽 カテゴリー選択後
+# =========================
+if selected_category != "選択してください":
+
+    # 選んだカテゴリーで絞る
+    filtered = df[df["カテゴリー"] == selected_category]
+
+    # 問い合わせ一覧
+    options = filtered["問い合わせ内容"].dropna().tolist()
+
+    selected_inquiry = st.selectbox(
+        "問い合わせを選択",
+        options
+    )
+
+    # 選択されたデータ取得
+    row = filtered[filtered["問い合わせ内容"] == selected_inquiry].iloc[0]
+
+    # 表示
     st.write("### 件名")
     st.write(row["件名"])
 
     st.write("### 返信文（編集できます）")
-    edited_text = st.text_area("返信文を編集", value=row["返信文"], height=200)
+    edited_text = st.text_area(
+        "返信文を編集",
+        value=row["返信文"],
+        height=200
+    )
+
+    # コピーしやすい表示
     st.code(edited_text)
 
+# 区切り
 st.write("---")
 
 # =========================
-# 🔽 キーワード検索
+# 🔽 キーワード検索（そのまま残す）
 # =========================
 st.write("### キーワード検索")
 
 keyword = st.text_input("キーワードを入力してください")
 
 if keyword:
-    filtered = df[df["問い合わせ内容"].str.contains(keyword, na=False)]
+    filtered_kw = df[df["問い合わせ内容"].str.contains(keyword, na=False)]
 
-    if not filtered.empty:
-        options = filtered["問い合わせ内容"].tolist()
-        selected = st.selectbox("検索結果から選択", options)
+    if not filtered_kw.empty:
+        options = filtered_kw["問い合わせ内容"].tolist()
 
-        row = filtered[filtered["問い合わせ内容"] == selected].iloc[0]
+        selected_kw = st.selectbox("検索結果から選択", options)
+
+        row = filtered_kw[filtered_kw["問い合わせ内容"] == selected_kw].iloc[0]
 
         st.write("### 件名")
         st.write(row["件名"])
 
-        st.write("### 返信文（編集できます）")
-        edited_text = st.text_area("返信文を編集（検索結果）", value=row["返信文"], height=200)
-        st.code(edited_text)
+        edited_text = st.text_area(
+            "返信文を編集（検索結果）",
+            value=row["返信文"],
+            height=200
+        )
 
+        st.code(edited_text)
     else:
         st.write("該当なし")
