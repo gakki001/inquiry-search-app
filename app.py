@@ -4,43 +4,43 @@ import pandas as pd
 # タイトル
 st.title("問い合わせ検索ツール")
 
-# CSV読み込み（あなたのURLに変更）
+# CSV読み込み
 url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRVoHcBTlvlpZkRjYrjV0JQA7e0IYgGkoJVKI2eTv3PLrAtuGwQKTXg8Ht3zkM4WJK9tDFyyNQcC-2H/pub?gid=350386044&single=true&output=csv"
 df = pd.read_csv(url)
 
 # =========================
-# 🔽 カテゴリー選択
+# 🔽 カテゴリーボタン
 # =========================
-st.write("### カテゴリーから選択")
+st.write("### カテゴリーを選択")
 
-# カテゴリー一覧（重複削除＋並び替え）
-categories = sorted(df["カテゴリー"].dropna().unique().tolist())
+categories = df["カテゴリー"].dropna().unique().tolist()
 
-selected_category = st.selectbox(
-    "カテゴリーを選択",
-    ["選択してください"] + categories
-)
+# 選択状態を保持
+if "selected_category" not in st.session_state:
+    st.session_state.selected_category = None
+
+# ボタンを横並びにする
+cols = st.columns(3)
+
+for i, category in enumerate(categories):
+    if cols[i % 3].button(category):
+        st.session_state.selected_category = category
 
 # =========================
 # 🔽 カテゴリー選択後
 # =========================
-if selected_category != "選択してください":
+if st.session_state.selected_category:
 
-    # 選んだカテゴリーで絞る
-    filtered = df[df["カテゴリー"] == selected_category]
+    st.write(f"### 選択中：{st.session_state.selected_category}")
 
-    # 問い合わせ一覧
+    filtered = df[df["カテゴリー"] == st.session_state.selected_category]
+
     options = filtered["問い合わせ内容"].dropna().tolist()
 
-    selected_inquiry = st.selectbox(
-        "問い合わせを選択",
-        options
-    )
+    selected_inquiry = st.selectbox("問い合わせを選択", options)
 
-    # 選択されたデータ取得
     row = filtered[filtered["問い合わせ内容"] == selected_inquiry].iloc[0]
 
-    # 表示
     st.write("### 件名")
     st.write(row["件名"])
 
@@ -51,14 +51,13 @@ if selected_category != "選択してください":
         height=200
     )
 
-    # コピーしやすい表示
     st.code(edited_text)
 
 # 区切り
 st.write("---")
 
 # =========================
-# 🔽 キーワード検索（そのまま残す）
+# 🔽 キーワード検索
 # =========================
 st.write("### キーワード検索")
 
